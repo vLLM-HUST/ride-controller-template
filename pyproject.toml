@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "course-ride-controller"
+version = "0.1.0"
+description = "Starter Controller for the course RIDE Control Plane bonus project"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["ride-control-plane==0.3.4"]
+
+[project.entry-points."ride.controllers"]
+course-starter = "course_ride_controller.adapter:Adapter"
+
+[tool.setuptools.packages.find]
+where = ["src"]
