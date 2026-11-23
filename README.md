@@ -39,4 +39,4 @@ RIDE_MANAGED_SMOKE=1 python -m unittest discover -s tests -v
 
 在 Linux 或 WSL 运行上述托管测试。真实模型、Ray 和性能验证按选题需要增补。第 8 讲提交项目，按 [实验记录模板](EXPERIMENT.md) 保存证据。
 
-[课程加分标准](https://courses.sage.org.ai/tutorials/assessment/#bonus) · [RIDE SDK 开发契约](https://github.com/vLLM-HUST/ride/blob/e4fb25ec6920624c29f1ad2f261a6e8a4e55755b/docs/guides/CONTROLLER_DEVELOPMENT.md)
+[RIDE SDK 开发契约](https://github.com/vLLM-HUST/ride/blob/e4fb25ec6920624c29f1ad2f261a6e8a4e55755b/docs/guides/CONTROLLER_DEVELOPMENT.md)
