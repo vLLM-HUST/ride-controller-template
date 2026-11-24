@@ -85,15 +85,20 @@ def specification(directory, backend):
 
 
 class ControllerSmokeTest(unittest.TestCase):
-    def check_request(self, endpoint):
-        client = PeerClient(endpoint, timeout=4)
+    def check_completion(self, client):
         response = client.post(
             "/v1/chat/completions",
             {"model": "mock-vllm", "messages": [{"role": "user", "content": "hello"}]},
         )
         self.assertEqual(response["choices"][0]["message"]["content"], "hello")
         self.assertEqual(response["ride_evidence_type"], "mock")
+        return response
+
+    def check_request(self, endpoint):
+        client = PeerClient(endpoint, timeout=4)
+        response = self.check_completion(client)
         self.assertEqual(client.get("/status")["completed"], 1)
+        return response
 
     def test_installed_adapter_and_real_cpu_request(self):
         with TemporaryDirectory() as work, temporary_model() as backend:
@@ -166,17 +171,31 @@ class ControllerSmokeTest(unittest.TestCase):
                     running = True
                     first = wait_for(describe, lambda info: info["ready"], "first Controller")
                     self.assertEqual(first["job_id"], original["job_id"])
-                    self.check_request(spec["endpoint"])
+                    first_response = self.check_request(spec["endpoint"])
                     ride("stop", "controller", name)
                     running = False
-                    self.assertEqual(describe()["job_status"], "STOPPED")
-                    self.assertEqual(PeerClient(backend, timeout=2).get("/health")["status"], "ok")
+                    stopped = describe()
+                    self.assertEqual(stopped["job_status"], "STOPPED")
+                    model = PeerClient(backend, timeout=2)
+                    self.assertEqual(model.get("/health")["status"], "ok")
+                    direct_response = self.check_completion(model)
                     restarted = ride("start", "controller", name)
                     running = True
                     ready = wait_for(describe, lambda info: info["ready"], "restarted Controller")
                     self.assertEqual(restarted["job_id"], ready["job_id"])
                     self.assertNotEqual(ready["job_id"], first["job_id"])
-                    self.check_request(spec["endpoint"])
+                    restarted_response = self.check_request(spec["endpoint"])
+                    evidence = {
+                        "configuration": json.loads(Path(spec["configuration"]).read_text()),
+                        "registration": spec,
+                        "started": first,
+                        "response_via_controller": first_response,
+                        "stopped": stopped,
+                        "response_direct_to_model": direct_response,
+                        "restarted": ready,
+                        "response_via_restarted_controller": restarted_response,
+                    }
+                    print(json.dumps(evidence, indent=2, ensure_ascii=False), flush=True)
                 except (AssertionError, OSError):
                     print(management_log.read_text(encoding="utf-8", errors="replace"))
                     raise
