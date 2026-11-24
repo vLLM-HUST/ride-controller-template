@@ -1,6 +1,6 @@
 # RIDE Control Plane Controller 模板
 
-《大模型推理系统与实践》选做加分项目 · 为 yancan 负责的 RIDE Control Plane 开发一个插件 · 最多 +30 分。
+《大模型推理系统与实践》第 8 讲选做加分项目。为 yancan 负责的 RIDE Control Plane 开发一个插件，最多加 30 分。每位学生还需独立完成 [vLLM-HUST 引擎 MOD 必做项目](https://github.com/vLLM-HUST/vllm-hust-mod-template)。
 
 本模板用 RIDE 公共 SDK 注册独立进程，提供健康、身份、状态和非流式请求入口。本地服务器监听回环地址，使用 CPU 模型替身复现请求。起始策略原样转发，学生在 `policy.py` 实现并验证自己的行为。
 
@@ -38,11 +38,15 @@ python -m pip install build
 wheel_dir="$(mktemp -d)"
 python -m build --wheel --outdir "$wheel_dir"
 python -m pip install --force-reinstall --no-deps "$wheel_dir"/*.whl
-RIDE_MANAGED_SMOKE=1 python -m unittest discover -s tests -v
+
+mkdir -p evidence
+run_dir="$(mktemp -d evidence/run-XXXXXX)"
+set -o pipefail
+RIDE_MANAGED_SMOKE=1 python -m unittest discover -s tests -v 2>&1 | tee "$run_dir/managed-smoke.log"
 ```
 
-在 Linux 或 WSL 运行上述托管测试。真实模型、Ray 和性能验证按选题需要增补。第 8 讲提交项目，按 [实验记录模板](EXPERIMENT.md) 保存证据。
+在 Linux 或 WSL 运行上述托管测试。每次运行使用独立的日志目录。记录包含本次 CPU 模型替身实验的注册配置、启动与重启时 RIDE 回读的 Ready 和身份、停止状态，以及三个请求的响应（经 Controller、停止后直连模型替身、经重启后的 Controller）。
 
-建议在项目内用 `evidence/` 保存复跑输出，并在 `EXPERIMENT.md` 写出相对路径。托管测试退出时会清理临时状态。若要提交 Ready、身份和状态原文，在自己的 Controller 运行期间执行 `ride describe controller "$controller_name" --address "$ride_address"`，将输出保存到 `evidence/ride-describe.json`。这两个变量分别是启动时的实例名称和 RIDE 管理地址。将策略触发请求、对照结果和生命周期测试输出一并保存。
+第 8 讲提交时，在 [实验记录模板](EXPERIMENT.md) 填写日志路径，并另附能触发自己策略的输入和对照结果。真实模型、Ray 和性能验证按选题需要增补。
 
 [RIDE SDK 开发契约](https://github.com/vLLM-HUST/ride/blob/e4fb25ec6920624c29f1ad2f261a6e8a4e55755b/docs/guides/CONTROLLER_DEVELOPMENT.md)
